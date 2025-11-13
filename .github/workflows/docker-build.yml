@@ -1,0 +1,102 @@
+name: Build and Push Docker Images
+
+on:
+  # push:
+  #   branches: [main]
+  #   paths: ['containers/**', '.github/workflows/docker-build.yml']
+  # pull_request:
+  #   branches: [main]
+  #   paths: ['containers/**']
+  workflow_dispatch:
+    inputs:
+      container:
+        description: 'Container to build (etl, train, or all)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - etl
+          - train
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  detect-changes:
+    name: Detect Changed Containers
+    runs-on: ubuntu-latest
+    outputs:
+      etl: ${{ steps.filter.outputs.etl }}
+      train: ${{ steps.filter.outputs.train }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            etl:
+              - 'containers/etl/**'
+            train:
+              - 'containers/train/**'
+
+  build:
+    name: Build and Push ${{ matrix.container }}
+    needs: detect-changes
+    if: |
+      (matrix.container == 'etl' && needs.detect-changes.outputs.etl == 'true') ||
+      (matrix.container == 'train' && needs.detect-changes.outputs.train == 'true') ||
+      (github.event_name == 'workflow_dispatch' && 
+        (inputs.container == 'all' || 
+         (inputs.container == 'etl' && matrix.container == 'etl') ||
+         (inputs.container == 'train' && matrix.container == 'train')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [etl, train]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.container }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push ${{ matrix.container }} image
+        uses: docker/build-push-action@v5
+        with:
+          context: containers/${{ matrix.container }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
