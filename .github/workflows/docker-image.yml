@@ -1,18 +1,41 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  # push:
+  #   branches: ["main"]
+  workflow_dispatch: {}
 
 jobs:
-
   build:
-
+    name: Build Docker image (Buildx)
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image with buildx
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: my-image-name:${{ github.sha }}
+
+      - name: Save built image to tar
+        run: |
+          IMAGE=my-image-name:${{ github.sha }}
+          OUT=my-image-${{ github.sha }}.tar
+          docker save -o "$OUT" "$IMAGE"
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-image-tar
+          path: my-image-${{ github.sha }}.tar
