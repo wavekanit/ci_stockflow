@@ -3,7 +3,16 @@ name: Docker Image CI
 on:
   # push:
   #   branches: ["main"]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dockerfile_path:
+        description: 'Path to Dockerfile (relative to repo root)'
+        required: true
+        default: 'containers/etl/Dockerfile'
+      build_context:
+        description: 'Build context path (relative to repo root)'
+        required: true
+        default: 'containers/etl'
 
 jobs:
   build:
@@ -22,8 +31,8 @@ jobs:
       - name: Build image with buildx
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: Dockerfile
+          context: ${{ github.event.inputs.build_context }}
+          file: ${{ github.event.inputs.dockerfile_path }}
           push: false
           load: true
           tags: my-image-name:${{ github.sha }}
