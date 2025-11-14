@@ -1,9 +1,7 @@
 import torch
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+# from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset
-
-import pandas as pd
 
 
 class MultiFeaturePriceDataset(Dataset):
