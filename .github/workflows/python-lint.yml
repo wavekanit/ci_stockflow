@@ -1,0 +1,74 @@
+name: Python Linting
+
+on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+    # 1. เช็คเอาท์โค้ด
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    # 2. ติดตั้ง Python
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # 3. ติดตั้ง Linting Tools
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black
+    
+    # 4. ติดตั้ง ETL dependencies (pyproject.toml)
+    - name: Install ETL dependencies
+      run: |
+        pip install -e containers/etl/
+      continue-on-error: true
+
+    # 5. ติดตั้ง Train dependencies (requirements.txt)
+    - name: Install Train dependencies
+      run: |
+        pip install -r containers/train/requirements.txt
+      continue-on-error: true
+
+    # 6. ติดตั้ง Airflow dependencies (DAG requirements)
+    - name: Install Airflow dependencies
+      run: |
+        pip install apache-airflow
+      continue-on-error: true
+    
+    # 7. รัน Black (Formatter Check) - airflow dags
+    - name: Run Black on airflow/dags
+      run: |
+        black airflow/dags --check
+      continue-on-error: true
+
+    # 8. รัน Black (Formatter Check) - containers
+    - name: Run Black on containers
+      run: |
+        black containers --check
+      continue-on-error: true
+
+    # 9. รัน Flake8 (Linter Check) - airflow dags
+    - name: Run Flake8 on airflow/dags
+      run: |
+        flake8 airflow/dags --max-line-length=120 --ignore=E203,W503
+      continue-on-error: true
+
+    # 10. รัน Flake8 (Linter Check) - containers
+    - name: Run Flake8 on containers
+      run: |
+        flake8 containers --max-line-length=120 --ignore=E203,W503
+      continue-on-error: true
