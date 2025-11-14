@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class GRU(nn.Module):
     def __init__(
         self,
@@ -40,11 +41,11 @@ class GRU(nn.Module):
         out, h_n = self.gru(x)
 
         if self.bidirectional:
-            last_forward  = h_n[-2, :, :]
+            last_forward = h_n[-2, :, :]
             last_backward = h_n[-1, :, :]
             last_hidden = torch.cat([last_forward, last_backward], dim=-1)
         else:
-            last_hidden = h_n[-1, :, :] 
+            last_hidden = h_n[-1, :, :]
 
         last_hidden = self.output_dropout(last_hidden)
 

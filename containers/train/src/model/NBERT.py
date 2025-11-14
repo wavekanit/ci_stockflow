@@ -6,8 +6,8 @@ import torch.nn as nn
 class NBeatsBlock(nn.Module):
     def __init__(
         self,
-        input_dim: int,    
-        forecast_len: int, 
+        input_dim: int,
+        forecast_len: int,
         hidden_dim: int = 128,
         n_layers: int = 4,
     ):
@@ -35,8 +35,8 @@ class NBeatsBlock(nn.Module):
 class NBERT(nn.Module):
     def __init__(
         self,
-        input_size: int,    
-        seq_len: int,      
+        input_size: int,
+        seq_len: int,
         output_size: int = 1,
         hidden_dim: int = 128,
         n_blocks: int = 3,
@@ -51,15 +51,17 @@ class NBERT(nn.Module):
         self.backcast_dim = seq_len * input_size
         self.forecast_len = output_size
 
-        self.blocks = nn.ModuleList([
-            NBeatsBlock(
-                input_dim=self.backcast_dim,
-                forecast_len=self.forecast_len,
-                hidden_dim=hidden_dim,
-                n_layers=n_layers,
-            )
-            for _ in range(n_blocks)
-        ])
+        self.blocks = nn.ModuleList(
+            [
+                NBeatsBlock(
+                    input_dim=self.backcast_dim,
+                    forecast_len=self.forecast_len,
+                    hidden_dim=hidden_dim,
+                    n_layers=n_layers,
+                )
+                for _ in range(n_blocks)
+            ]
+        )
 
         self.dropout = nn.Dropout(dropout)
 

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, date, timedelta
 
+
 def get_dummy(spec: dict, n_rows: int = 10, seed: int | None = None) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     df = pd.DataFrame({"id": np.arange(n_rows)})
@@ -20,7 +21,7 @@ def get_dummy(spec: dict, n_rows: int = 10, seed: int | None = None) -> pd.DataF
             df[col] = [f"{col}_{v}" for v in vals]
 
         elif t in ("bool", "boolean"):
-            df[col] = (rng.random(n_rows) > 0.5)
+            df[col] = rng.random(n_rows) > 0.5
 
         elif t == "date":
             start = date.today()

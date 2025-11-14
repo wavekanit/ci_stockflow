@@ -3,7 +3,10 @@ import model.NBERT as NBERTModel
 import StockDataset
 import GetDummies
 
-def train_model(model, dataLoader, lr=0.001, epochs=30, loss_fn=torch.nn.MSELoss(), log_interval=10):
+
+def train_model(
+    model, dataLoader, lr=0.001, epochs=30, loss_fn=torch.nn.MSELoss(), log_interval=10
+):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     model.train()
     for epoch in range(epochs):
@@ -16,38 +19,34 @@ def train_model(model, dataLoader, lr=0.001, epochs=30, loss_fn=torch.nn.MSELoss
             optimizer.step()
             total_loss += loss.item()
             if (batch_idx + 1) % log_interval == 0:
-                print(f'Epoch [{epoch+1}/{epochs}], Step [{batch_idx+1}/{len(dataLoader)}], Loss: {loss.item():.4f}')
+                print(
+                    f"Epoch [{epoch+1}/{epochs}], Step [{batch_idx+1}/{len(dataLoader)}], Loss: {loss.item():.4f}"
+                )
         avg_loss = total_loss / len(dataLoader)
-        print(f'Epoch [{epoch+1}/{epochs}] completed. Average Loss: {avg_loss:.4f}')
+        print(f"Epoch [{epoch+1}/{epochs}] completed. Average Loss: {avg_loss:.4f}")
     return model
+
 
 def main():
     data = GetDummies.get_dummy(
         spec={
-            "Open":"float",
-            "High":"float",
-            "Low":"float",
-            "Close":"float",
-            "Volume":"int"
+            "Open": "float",
+            "High": "float",
+            "Low": "float",
+            "Close": "float",
+            "Volume": "int",
         },
-        n_rows=1000
+        n_rows=1000,
     )
     feat_cols = ["Open", "High", "Low", "Volume"]
     target_col = ["Close"]
     seq_len = 50
 
     stock_data = StockDataset.MultiFeaturePriceDataset(
-        data=data,
-        feature_cols=feat_cols,
-        target_col=target_col,
-        seq_len = seq_len
+        data=data, feature_cols=feat_cols, target_col=target_col, seq_len=seq_len
     )
 
-    dataLoader = torch.utils.data.DataLoader(
-        stock_data,
-        batch_size=32,
-        shuffle=True
-    )
+    dataLoader = torch.utils.data.DataLoader(stock_data, batch_size=32, shuffle=True)
 
     # model = LSTMModel.LSTM(
     #     input_size=len(feat_cols),
@@ -55,7 +54,7 @@ def main():
     #     num_layers=4,
     #     pkl_path=None
     # )
-    
+
     # model = GRUModel.GRU(
     #     input_size=len(feat_cols),
     #     hidden_size=64,
@@ -67,7 +66,7 @@ def main():
     # )
 
     model = NBERTModel.NBERT(
-        input_size=len(feat_cols), 
+        input_size=len(feat_cols),
         seq_len=seq_len,
         output_size=1,
         dropout=0.1,
@@ -87,7 +86,6 @@ def main():
     #     output_size=1,
     #     pkl_path=None,
     # )
-    
 
     trained_model = train_model(
         model=model,
@@ -95,11 +93,10 @@ def main():
         lr=0.001,
         epochs=50,
         loss_fn=torch.nn.MSELoss(),
-        log_interval=10
+        log_interval=10,
     )
     trained_model.save_model("lstm_stock_model.pkl")
 
 
 if __name__ == "__main__":
     main()
-    

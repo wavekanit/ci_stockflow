@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+
 # from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset
 
@@ -20,8 +21,8 @@ class MultiFeaturePriceDataset(Dataset):
 
         n = self.X_all.shape[0]
         for i in range(n - seq_len):
-            X_seq = self.X_all[i : i+seq_len]
-            y_val = self.y_all[i+seq_len]
+            X_seq = self.X_all[i : i + seq_len]
+            y_val = self.y_all[i + seq_len]
 
             X_list.append(X_seq)
             y_list.append(y_val)

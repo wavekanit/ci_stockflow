@@ -2,18 +2,19 @@ import math
 import torch
 import torch.nn as nn
 
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(dropout)
 
-        pe = torch.zeros(max_len, d_model)          # (max_len, d_model)
+        pe = torch.zeros(max_len, d_model)  # (max_len, d_model)
         position = torch.arange(0, max_len).unsqueeze(1)  # (max_len, 1)
         div_term = torch.exp(
             torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model)
         )
-        pe[:, 0::2] = torch.sin(position * div_term)   # even
-        pe[:, 1::2] = torch.cos(position * div_term)   # odd
+        pe[:, 0::2] = torch.sin(position * div_term)  # even
+        pe[:, 1::2] = torch.cos(position * div_term)  # odd
 
         pe = pe.unsqueeze(0)  # (1, max_len, d_model) for batch_first
         self.register_buffer("pe", pe)
@@ -61,11 +62,11 @@ class Transformer(nn.Module):
             self.eval()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.input_proj(x)          # (batch, seq_len, d_model)
+        x = self.input_proj(x)  # (batch, seq_len, d_model)
 
-        x = self.pos_encoder(x)         # (batch, seq_len, d_model)
+        x = self.pos_encoder(x)  # (batch, seq_len, d_model)
 
-        enc_out = self.encoder(x)       # (batch, seq_len, d_model)
+        enc_out = self.encoder(x)  # (batch, seq_len, d_model)
 
         last_hidden = enc_out[:, -1, :]  # (batch, d_model)
         price_pred = self.fc_out(last_hidden)  # (batch, output_size)
