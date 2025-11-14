@@ -46,22 +46,22 @@ jobs:
         pip install apache-airflow
       continue-on-error: true
     
-    # 7. รัน Black (Auto-fix Formatter) - airflow dags
+    # 7. รัน Black - airflow dags
     - name: Format code with Black on airflow/dags
       run: |
-        black airflow/dags --line-length=120
+        black airflow/dags --check
 
-    # 8. รัน Black (Auto-fix Formatter) - containers
+    # 8. รัน Black - containers
     - name: Format code with Black on containers
       run: |
-        black containers --line-length=120
+        black containers --check
 
     # 9. รัน Flake8 (Linter Check) - airflow dags
     - name: Run Flake8 on airflow/dags
       run: |
-        flake8 airflow/dags --max-line-length=120 --ignore=E203,W503
+        flake8 airflow/dags --max-line-length=88 --ignore=E203,W503
 
     # 10. รัน Flake8 (Linter Check) - containers
     - name: Run Flake8 on containers
       run: |
-        flake8 containers --max-line-length=120 --ignore=E203,W503
+        flake8 containers --max-line-length=88 --ignore=E203,W503
